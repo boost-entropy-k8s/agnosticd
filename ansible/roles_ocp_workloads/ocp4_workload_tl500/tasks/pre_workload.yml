@@ -11,9 +11,6 @@
 - name: Install redhat-cop helm repository
   command: helm repo add redhat-cop https://redhat-cop.github.io/helm-charts
 
-- name: Install redhat-cop helm repository
-  command: helm repo add eformat https://eformat.github.io/helm-charts
-
 - name: Update helm repo
   command: helm repo update
 
@@ -34,6 +31,9 @@
       {{ r_api_url.resources[0].status.apiServerURL }} \
       --insecure-skip-tls-verify=true
   register: oc_kubeadmin
+  retries: 20
+  delay: 15
+  until: oc_kubeadmin.rc == 0
 
 - name: Get the openshift console route
   k8s_info:
