@@ -1,6 +1,6 @@
 version: "1"
 rules:
   - base: development
-    upstream: null:development
+    upstream: redhat-cop:development
     mergeMethod: merge
     mergeUnstable: true
