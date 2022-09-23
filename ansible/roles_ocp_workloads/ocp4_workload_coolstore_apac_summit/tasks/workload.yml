@@ -67,6 +67,8 @@
   loop:
   - cicd/coolstore-imagestreams.yaml.j2
   - cicd/coolstore-build-configs.yaml.j2
+  - cicd/ci-imagestreams.yaml.j2
+  - cicd/ci-build-configs.yaml.j2
   - cicd/generate-tag-task.yaml.j2
   - cicd/image-check-task.yaml.j2
   - cicd/image-scan-task.yaml.j2
@@ -158,3 +160,76 @@
   - "{{ ocp4_workload_coolstore_apac_summit_repo }}"
   loop_control:
     loop_var: _ocp4_workload_coolstore_apac_webhook_repository
+
+- name: Get the OpenShift GitOps Route
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Route
+    namespace: openshift-gitops
+    label_selectors:
+    - app.kubernetes.io/name=openshift-gitops-server
+  register: r_route_kinfo
+
+- name: Get the OpenShift GitOps Secret Information
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Secret
+    namespace: openshift-gitops
+    label_selectors:
+    - app.kubernetes.io/name=openshift-gitops-cluster
+  register: r_secret_kinfo
+
+- name: Get the ACS Route
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Route
+    name: central
+    namespace: stackrox
+  register: r_route_acs
+
+- name: Get ACS/Stackrox Secret Information
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Secret
+    namespace: openshift-gitops
+    label_selectors:
+    - app.kubernetes.io/name=openshift-gitops-cluster
+  register: r_secret_acs
+
+- name: Get the SonarQube Route
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Route
+    name: sonarqube
+    namespace: sonarqube
+  register: r_route_sonar
+
+- name: Print Access information
+  agnosticd_user_info:
+    msg: "{{ item }}"
+  loop:
+  - ""
+  - "Application url: http://{{ _ocp4_workload_coolstore_apac_summit_web_ui_host }}"
+  - "Application username: appuser"
+  - "Application password: coolstore"
+  - ""
+  - "OpenShift GitOps (argocd) url: https://{{r_route_kinfo.resources.0.spec.host }}"
+  - "OpenShift GitOps username: admin"
+  - "OpenShift GitOps admin password: {{ r_secret_kinfo.resources.0.data['admin.password'] | b64decode }}"
+  - ""
+  - "SonarQube url: https://{{ r_route_sonar.resources.0.spec.host }}"
+  - "SonarQube user: admin"
+  - "SonarQube password: {{ common_password }}"
+
+- name: Print Access information
+  agnosticd_user_info:
+    data:
+      app_url: "http://{{ _ocp4_workload_coolstore_apac_summit_web_ui_host }}"
+      app_username: "appuser"
+      app_password: "coolstore"
+      gitops_argocd_url: "https://{{r_route_kinfo.resources.0.spec.host }}"
+      gitops_argocd_username: "admin"
+      gitops_argocd_admin_password: "{{ r_secret_kinfo.resources.0.data['admin.password'] | b64decode }}"
+      sonarqube_url: "https://{{ r_route_sonar.resources.0.spec.host }}"
+      sonarqube_username: "admin"
+      sonarqube_password: "{{ common_password }}"
