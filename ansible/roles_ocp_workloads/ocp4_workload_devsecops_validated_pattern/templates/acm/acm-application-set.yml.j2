@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: {{ _app }}-{{ cluster.name }}
+  name: {{ _app_name }}-{{ cluster.name }}
   namespace: {{ ocp4_workload_devsecops_validated_pattern_openshift_gitops_namespace }}
 spec:
   generators:
@@ -9,11 +9,11 @@ spec:
         configMapRef: acm-placement
         labelSelector:
           matchLabels:
-            cluster.open-cluster-management.io/placement: {{ _app }}-{{ cluster.name }}
+            cluster.open-cluster-management.io/placement: {{ _app_name }}-{{ cluster.name }}
         requeueAfterSeconds: 30
   template:
     metadata:
-      name: {{ _app }}-{{ '{{name}}' }}
+      name: {{ _app_name }}-{{ '{{name}}' }}
       labels:
         velero.io/exclude-from-backup: "true"
     spec:
@@ -22,23 +22,29 @@ spec:
         server: "{{ '{{server}}' }}"
       project: default
       source:
-{% if _namespace == "globex"  %}
-{% if _app == "globex"  %}
-        path: gitops/application/globex/overlays/{{ cluster.name }}
-{% else %}
-        path: gitops/application/globex/overlays/fail
+{% if _app_name == 'applications' %}
+        path: gitops/charts/{{ cluster.name }}
+        repoURL: {{ _ocp4_workload_devsecops_validated_pattern_gitea_repo_devsecops_url }}
+        targetRevision: main
+        helm:
+          parameters:
+            - name: {{ cluster.purpose }}.repoUrl
+              value: "{{ _ocp4_workload_devsecops_validated_pattern_gitea_repo_devsecops_url }}"
+            - name: {{ cluster.purpose }}.globex.namespace
+              value: "{{ ocp4_workload_devsecops_validated_pattern_app_namespace }}"
+            - name: {{ cluster.purpose }}.globex.contextDir
+              value: gitops/application/globex/overlays/{{ cluster.name }}
+{% if cluster.purpose == 'development' %}
+            - name: {{ cluster.purpose }}.globexUnsigned.namespace
+              value: "{{ ocp4_workload_devsecops_validated_pattern_app_namespace }}"
+            - name: {{ cluster.purpose }}.globexUnsigned.contextDir
+              value: gitops/application/globex/overlays/fail
 {% endif %}
-        repoURL: {{ _ocp4_workload_devsecops_validated_pattern_gitea_repo_devsecops_url }}
-        targetRevision: main
-      ignoreDifferences:
-        - kind: "ServiceAccount"
-          jsonPointers:
-          - /imagePullSecrets
-{% elif _namespace == "kafka"  %}
-        path: gitops/application/kafka/overlays/{{ cluster.name }}
-        repoURL: {{ _ocp4_workload_devsecops_validated_pattern_gitea_repo_devsecops_url }}
-        targetRevision: main
-{% elif _namespace == "ci"  %}
+            - name: {{ cluster.purpose }}.kafka.namespace
+              value: "{{ ocp4_workload_devsecops_validated_pattern_kafka_namespace }}"
+            - name: {{ cluster.purpose }}.kafka.contextDir
+              value: gitops/application/kafka/overlays/{{ cluster.name }}
+{% else %}
         path: config/pipeline/charts/globex-ui
         repoURL: {{ _ocp4_workload_devsecops_validated_pattern_gitea_repo_devsecops_url }}
         targetRevision: main
