@@ -20,6 +20,10 @@
   retries: 10
   delay: 5
 
+- name: Wait for bookbag deployment
+  include_tasks:
+    file: wait-for-bookbag-deployment.yml
+
 - name: Get bookbag route
   k8s_info:
     kubeconfig: "{{ _bookbag_kubeconfig | default(omit) }}"
@@ -28,7 +32,7 @@
     name: "{{ _bookbag_instance_name }}"
     namespace: "{{ bookbag_namespace }}"
   register: r_bookbag_route
-  failed_when: r_bookbag_route.resources | length != 1
+  failed_when: r_bookbag_route.resources | default([]) | length != 1
   until: r_bookbag_route is successful
   retries: 10
   delay: 5

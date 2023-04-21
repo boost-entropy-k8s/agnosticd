@@ -47,10 +47,25 @@
 
 - name: Workaround for s3 bucket access
   when: ocp4_workload_rhacm_hypershift_s3_workaround | bool
-  ansible.builtin.command:
-    cmd: >-
-      aws s3api delete-public-access-block
-        --bucket {{ ocp4_workload_rhacm_hypershift_s3_bucket_name }}
+  block:
+  - name: Update s3 bucket
+    ansible.builtin.command:
+      cmd: >-
+        aws s3api delete-public-access-block
+          --bucket {{ ocp4_workload_rhacm_hypershift_s3_bucket_name }}
+
+  - name: Copy policy file
+    ansible.builtin.template:
+      src: bucket-policy.json.j2
+      dest: /tmp/bucket-policy.json
+
+  - name: Apply bucket policy
+    ansible.builtin.command:
+      chdir: /tmp
+      cmd: >-
+        aws s3api put-bucket-policy
+          --bucket {{ ocp4_workload_rhacm_hypershift_s3_bucket_name }}
+          --policy file://bucket-policy.json
 
 #############################################################################
 # Enable HyperShift Tech Preview
@@ -74,6 +89,15 @@
   kubernetes.core.k8s:
     state: present
     definition: "{{ lookup('file', 'managedclusteraddon.yaml') }}"
+
+#############################################################################
+# Patch Hypershift Images (workaround until S3 patch made it into product)
+#############################################################################
+- name: Patch Hypershift Images
+  when: ocp4_workload_rhacm_hypershift_hcp_operator_patch | bool
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('template', 'hypershift-override-images.yaml.j2') }}"
 
 #############################################################################
 # Configure HyperShift
