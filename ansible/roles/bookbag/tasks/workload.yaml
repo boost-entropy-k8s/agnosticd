@@ -55,7 +55,7 @@
 
 - name: Build bookbag image
   command: >-
-    oc start-build bookbag --follow
+    oc start-build bookbag --follow --wait
     {% if _bookbag_kubeconfig is defined %}--kubeconfig={{ _bookbag_kubeconfig | quote }}{% endif %}
     --namespace={{ bookbag_namespace | quote }}
     --from-dir={{ r_bookbag_tmp.path | quote }}
@@ -65,7 +65,7 @@
     "Error: " in r_build_bookbag_image.stderr or
     "build error: " in r_build_bookbag_image.stdout
   until: r_build_bookbag_image is successful
-  retries: 10
+  retries: 30
   delay: 5
 
 - name: Read user-data.yaml
