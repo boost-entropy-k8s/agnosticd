@@ -103,15 +103,16 @@ instances:
       - HostSG
       - WebSG
   
-  - name: "gitea"
+  - name: "gitlab"
     count: 1
-    public_dns: false
+    unique: true
+    public_dns: true
     image: "{{ gitea_instance_image | default(default_instance_image) }}"
     flavor:
       ec2: "{{ gitea_instance_type | default(default_instance_type) }}"
     tags:
       - key: "AnsibleGroup"
-        value: "gitea"
+        value: "gitlab"
       - key: "ostype"
         value: "rhel"
       - key: "instance_filter"
@@ -156,4 +157,5 @@ instances:
 # -------------------------------------------------
 inventory_groups:
   - nodes
-  - gitea
+  - gitlab
+  - windows
