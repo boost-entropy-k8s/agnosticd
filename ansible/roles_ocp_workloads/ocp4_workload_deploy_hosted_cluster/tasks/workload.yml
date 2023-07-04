@@ -84,7 +84,7 @@
     _ocp4_workload_deploy_hosted_cluster_console_url: >-
       https://console-openshift-console.apps.{{ ocp4_workload_deploy_hosted_cluster_name }}.{{ ocp4_workload_deploy_hosted_cluster_base_domain }}
 
-- name: Ensure that the namespaces exists
+- name: Ensure that the policy namespaces exist on the hub
   kubernetes.core.k8s:
     state: present
     api_version: v1
