@@ -67,7 +67,7 @@
     when: osp_project_create
     block:
     - name: Create project for user
-      openstack.cloud.project_info:
+      openstack.cloud.project:
         name: "{{ osp_project_name }}"
         state: present
         description: "{{ env_type }} {{ guid }}"
@@ -153,7 +153,7 @@
       register: r_osp_project
 
     - set_fact:
-        osp_project_info: "{{ r_osp_project.ansible_facts.projects }}"
+        osp_project_info: "{{ r_osp_project.projects }}"
 
     - when: osp_project_info | length == 0
       fail:
