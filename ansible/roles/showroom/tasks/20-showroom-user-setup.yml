@@ -50,17 +50,17 @@
     - name: Add ansible_user to group wheel for machinectl privileges
       ansible.builtin.user:
         name: "{{ ansible_user }}"
+        password: "{{ generated_password | default(common_password) | password_hash('sha512') }}"
         groups: wheel
-        password: "{{ common_password | password_hash('sha512') }}"
         append: true
 
     - name: "Start --user {{ showroom_user }} podman.socket for traefik"
-      shell: "loginctl enable-linger $USER; systemctl --user enable podman.socket --now"
+      ansible.builtin.shell: "loginctl enable-linger $USER; systemctl --user enable podman.socket --now"
       become: true
       become_user: "{{ showroom_user }}"
       become_method: community.general.machinectl
       vars:
-        ansible_become_pass: "{{ common_password }}"
+        ansible_become_pass: "{{ generated_password | default(common_password) }}"
       environment:
         XDG_RUNTIME_DIR: "/run/user/{{ showroom_user_uid }}"
         DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ showroom_user_uid }}/bus"
