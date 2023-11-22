@@ -50,7 +50,7 @@
     merge_type:
     - strategic-merge
     - merge
-    definition: "{{ lookup('file', item ) | from_yaml }}"
+    definition: "{{ lookup('template', item ) | from_yaml }}"
   loop:
   - ./files/rhbk_cr.yaml
 
@@ -59,6 +59,7 @@
     api_version: k8s.keycloak.org/v2alpha1
     kind: Keycloak
     name: rhbk
+    namespace: rhbk
   register: r_rhbk_cr
   retries: 200
   delay: 10
