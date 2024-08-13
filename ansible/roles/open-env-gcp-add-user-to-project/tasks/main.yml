@@ -1,7 +1,7 @@
 ---
 - name: Load GCP credentials into string
   set_fact:
-    gcp_creds: "{{ gcp_credentials | from_json }}"
+    gcp_creds: "{{ gcp_credentials if gcp_credentials is mapping else gcp_credentials | from_json }}"
 
 - name: Check if email is Red Hat associate
   set_fact:
@@ -91,6 +91,16 @@
   ansible.builtin.file:
     path: "{{ svc_account_creds_file }}"
     state: absent
+
+- name: dump debug
+  debug:
+    msg: |
+      gcp_credentials: {{ gcp_credentials }}
+      service_account_email: {{ service_account_email }}
+      guid {{ guid }}
+      gcp_creds.project_id {{ gcp_creds.project_id }}
+      new_service_account {{ new_service_account }}
+      svc_account_creds_file {{ svc_account_creds_file }}
 
 - name: Create a service account key for OPEN Environment
   google.cloud.gcp_iam_service_account_key:
