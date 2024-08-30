@@ -1,39 +1,10 @@
 ---
-- name: create user {{ ocp4_workload_shared_cluster_username }}
-  kubernetes.core.k8s:
-    state: present
-    definition: "{{ lookup('template', 'keycloak_user.yaml.j2') }}"
+- name: setup users
+  ansible.builtin.include_tasks: setup_users.yml
 
-- name: add user to groups {{ ocp4_workload_shared_cluster_username }}
-  when: ocp4_workload_shared_cluster_user_groups | length > 0
-  ansible.builtin.command: "oc adm groups add-users {{ item }} {{ ocp4_workload_shared_cluster_username }}"
-  register: r_groupadd_register
-  with_items: "{{ ocp4_workload_shared_cluster_user_groups }}"
-
-- name: create ClusterResourceQuota
-  when: ocp4_workload_shared_cluster_create_quota | bool
-  kubernetes.core.k8s:
-    state: present
-    definition: "{{ lookup('template', 'cluster_resource_quota.yaml.j2') }}"
-
-# - name: Get console route
-#   k8s_info:
-#     api_version: route.openshift.io/v1
-#     kind: Route
-#     namespace: openshift-console
-#     name: console
-#   register: r_console_url
-
-# - name: Get API server URL
-#   k8s_info:
-#     api_version: config.openshift.io/v1
-#     kind: Infrastructure
-#     name: cluster
-#   register: r_api_url
-
-# - name: save agnosticd user info
-#   agnosticd_user_info:
-#     data:
-#       ocp4_workload_shared_cluster_api_url: "{{ r_api_url.resources[0].status.apiServerURL }}"
-#       ocp4_workload_shared_cluster_console_url: https://{{ r_console_url.resources[0].spec.host }}
-#       ocp4_workload_shared_cluster_username: "{{ ocp4_workload_shared_cluster_username }}"
+- name: setup devspaces
+  when: ocp4_workload_shared_cluster_devworkspace | bool
+  vars:
+    _devworkspace_name: "{{ ocp4_workload_shared_cluster_username }}-{{ ocp4_workload_shared_cluster_devworkspace_name }}"
+    _devworkspace_namespace: "{{ ocp4_workload_shared_cluster_username }}-{{ ocp4_workload_shared_cluster_devworkspace_namespace }}"
+  ansible.builtin.include_tasks: setup_devspaces.yml
