@@ -6,6 +6,9 @@ metadata:
   namespace: openshift-gitops
 spec:
   kustomizeBuildOptions: "--enable-helm --enable-alpha-plugins"
+{% if ocp4_workload_openshift_gitops_resourceTrackingMethod | length > 0 %}
+  resourceTrackingMethod: {{ ocp4_workload_openshift_gitops_resourceTrackingMethod }}
+{% endif %}
 {% if ocp4_workload_openshift_gitops_rbac_update | default(false) | bool %}
   rbac:
     policy: |
@@ -54,14 +57,14 @@ spec:
         memory: "{{ ocp4_workload_openshift_gitops_redis_requests_memory }}"
 {% endif %}
   repo:
-    env:
-    - name: SUB_DOMAIN
-      value: {{ _ocp4_workload_openshift_gitops_domain }}
 {% if ocp4_workload_openshift_gitops_kustomize_plugin | default(false) | bool %}
     sidecarContainers:
       - name: cmp
         command: [/var/run/argocd/argocd-cmp-server]
         image: {{ ocp4_workload_openshift_gitops_kustomize_plugin_image }}
+        env:
+        - name: SUB_DOMAIN
+          value: {{ _ocp4_workload_openshift_gitops_domain }}
         securityContext:
           runAsNonRoot: true
         volumeMounts:
